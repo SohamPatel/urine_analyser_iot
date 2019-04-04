@@ -2,5 +2,5 @@
 `pip install flask`
 
 # To run backend
-`python app.py`
-Note: You might have to change the `python` command to `python3.6` or `python3.7` based on version installed
+`./run.sh`
+Note: You might have to do `chmod +x run.sh` once to get executing permission for the shell script
