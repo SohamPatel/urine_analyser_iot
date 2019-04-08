@@ -1,5 +1,5 @@
-# To install Python Flask
-`pip install flask`
+# To install Python virtual environment
+`pip install virtualenv`
 
 # To run backend
 `./run.sh`
