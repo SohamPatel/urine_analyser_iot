@@ -27,12 +27,16 @@ def sensor_data():
         glucose = float(sensor_data['sensorData']['glucose'].split()[0])
         protein = float(sensor_data['sensorData']['protein'].split()[0])
 
+        # TODO: Update EMR
+
         outcome = ""
+
+        # https://www.aci.health.nsw.gov.au/__data/assets/pdf_file/0007/285811/Lets_Get_Started_-_Urinalysis.pdf
 
         # Normal values for urine - http://intranet.tdmu.edu.ua/data/kafedra/internal/i_nurse/classes_stud/BSN%20(4year)%20Program/Full%20time%20study/Third%20year/Integrate%20Nursing%20Practicum/17.%20Diagnostic%20Testing.files/image082.jpg
 
-        # Analyse Colour - https://www.semanticscholar.org/paper/An-IoT-based-pervasive-body-hydration-tracker-(PHT)-Chin-Tisan/1cc21f9479b012e02bb433fd0d3d39b11be37561/figure/5
-        #                  https://www.korwater.com/pages/hydration-urine-test
+        # TODO: Analyse Colour - https://www.semanticscholar.org/paper/An-IoT-based-pervasive-body-hydration-tracker-(PHT)-Chin-Tisan/1cc21f9479b012e02bb433fd0d3d39b11be37561/figure/5
+    #                            https://www.korwater.com/pages/hydration-urine-test
         if (colour['B'] < 40):
             # Extremely Dehydrated, may indicate blood in urine or kidney disease, alert doctor
             outcome += "Colour indicates extreme dehydration, possible blood in urine or kidney disease."
@@ -47,7 +51,7 @@ def sensor_data():
             outcome += "Colour indicates optimal hyrdration."
 
 
-        # Analyse pH - https://betterhealthclinic.com.au/urine-tests/
+        # TODO: Analyse pH - https://betterhealthclinic.com.au/urine-tests/
         if (ph < 5.5):
             # Very acidic, alert doctor
             outcome += "\npH level indicates very acidic urine."
@@ -62,7 +66,7 @@ def sensor_data():
             outcome += "\npH level indicates alkaline urine."
 
 
-        # Analyse Glucose - https://www.healthline.com/health/glucose-test-urine#results
+        # TODO: Analyse Glucose - https://www.healthline.com/health/glucose-test-urine#results
         if (glucose >= 0 and glucose <= 0.8):
             # Normal glucose level
             outcome += "\nNormal glucose level."
@@ -71,8 +75,9 @@ def sensor_data():
             outcome += "\nGlucose level inicates possible diabetes."
         
 
-        # Analyse Protein
+        # TODO: Analyse Protein
         outcome += "\nUnable to analyse Protein level."
+
 
         # print(colour, ph, glucose, protein)
         
