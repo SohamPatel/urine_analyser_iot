@@ -1,2 +1,8 @@
 
 backend/__pycache__/
+
+\.vscode/
+
+backend/\.DS_Store
+
+\.DS_Store

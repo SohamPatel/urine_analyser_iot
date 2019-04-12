@@ -1,9 +1,22 @@
+import sqlite3
 from flask import Flask, request
+import requests
+import re
+import json
 
+db_path = 'hospital.db'
 app = Flask(__name__)
+
+# Telstra API Credentials
+TAPI_CLIENT_ID = 'WTM8cZvo1xzWKTnDgIGwIdiblmVDhxaB'
+TAPI_CLIENT_SECRET = 'QMjsw8iQ1mDV4Utq'
+
+
 
 @app.route("/sensor_data", methods = ['POST'])
 def sensor_data():
+    global tapi_client_id, tapi_client_secret
+
     if request.method == 'POST':
         sensor_data = request.get_json()        
         # Example Data
@@ -26,6 +39,22 @@ def sensor_data():
         ph = sensor_data['sensorData']['pH']
         glucose = float(sensor_data['sensorData']['glucose'].split()[0])
         protein = float(sensor_data['sensorData']['protein'].split()[0])
+
+        # Retrieve nurse contact
+        result = query_db('''SELECT s.mobile FROM patient p
+                                JOIN ward w ON w.patient=p.id
+                                JOIN staff s ON w.nurse=s.id
+                                WHERE p.id = ?''', (patientID,))[0]
+        
+        nurse_contact = result['mobile']
+        print('Nurse contact number:', nurse_contact)
+
+        result = query_db('''SELECT s.mobile FROM patient p
+                                JOIN staff s ON p.doctor=s.id
+                                WHERE p.id = ?''', (patientID,))[0]
+        doctor_contact = result['mobile']
+        print('Doctor contact number:', doctor_contact)
+
 
         # TODO: Update EMR
 
@@ -54,37 +83,95 @@ def sensor_data():
         # TODO: Analyse pH - https://betterhealthclinic.com.au/urine-tests/
         if (ph < 5.5):
             # Very acidic, alert doctor
-            outcome += "\npH level indicates very acidic urine."
+            outcome += "\rpH level indicates very acidic urine."
         elif (ph >= 5.5 and ph < 6.5):
             # Acidic, alert staff to change diet to more alkaline and/or alkaline mineral supplements
-            outcome += "\npH level indicates acidic urine."
+            outcome += "\rpH level indicates acidic urine."
         elif (ph >= 6.5 and ph < 7.5):
             # Optimal, don't alert
-            outcome += "\npH level is optimal."
+            outcome += "\rpH level is optimal."
         elif (ph >= 7.5):
             # Alkaline, alert staff to monitor and acidify via diet if needed
-            outcome += "\npH level indicates alkaline urine."
+            outcome += "\rpH level indicates alkaline urine."
 
 
         # TODO: Analyse Glucose - https://www.healthline.com/health/glucose-test-urine#results
         if (glucose >= 0 and glucose <= 0.8):
             # Normal glucose level
-            outcome += "\nNormal glucose level."
+            outcome += "\rNormal glucose level."
         else:
             # Possible diabetes
-            outcome += "\nGlucose level inicates possible diabetes."
+            outcome += "\rGlucose level inicates possible diabetes."
         
 
         # TODO: Analyse Protein
-        outcome += "\nUnable to analyse Protein level."
+        outcome += "\rUnable to analyse Protein level."
 
 
-        # print(colour, ph, glucose, protein)
+        # Send Notification to either Doctor or staff based on analysis (UNCOMMENT BELOW TO MAKE IT WORK)
+        # # ========== SMS MESSAGING START ============
+        # # Get authorisation token
+        # auth_payload = {
+        #     'client_id' : TAPI_CLIENT_ID,
+        #     'client_secret': TAPI_CLIENT_SECRET,
+        #     'grant_type' : 'client_credentials',
+        #     'scope' : 'NSMS'
+        # }
+        # access_token = json.loads(requests.post("https://tapi.telstra.com/v2/oauth/token", data=auth_payload).text)['access_token']
         
-        return 'SUCCESS.\n\n' + outcome
+        # # Provision application
+        # provisioning_headers = {
+        #     'Content-Type': "application/json",
+        #     'Authorization': f"Bearer {access_token}"
+        # }
+        # provisioning_number = json.loads(requests.post("https://tapi.telstra.com/v2/messages/provisioning/subscriptions", data=json.dumps({}), headers=provisioning_headers).text)['destinationAddress']
+
+        # # Send SMS
+        # sms_message = outcome
+        # sms_payload = {
+        #     'to': doctor_contact,
+        #     'from': provisioning_number,
+        #     'body': sms_message
+        # }
+        # sms_headers = {
+        #     'Content-Type': "application/json",
+        #     'Authorization': f"Bearer {access_token}"
+        # }
+        # sms_response = requests.post("https://tapi.telstra.com/v2/messages/sms", data=json.dumps(sms_payload), headers=sms_headers)
+        # print(sms_response.text)
+        # print(sms_response.status_code)
+        # # ========== SMS MESSAGING END ============
+
+        return 'SUCCESS.\r\r' + outcome
     else:
         return 'Error 405 - Method Not Allowed'
 
+def query_db(query, args):
+    conn = sqlite3.connect(db_path)
+    conn.row_factory = dict_factory
+    cur = conn.cursor()
+    cur.execute(query, args)
+    result = cur.fetchall()
+    conn.close()
+    if result == None:
+        return result[0]
+    else:
+        return result
+
+def execute_db(query, args):
+    conn = sqlite3.connect(db_path)
+    cur = conn.cursor()
+    cur.execute(query, args)
+    conn.commit()
+    cur.close()
+    conn.close()
+    return
+
+def dict_factory(cursor, row):
+    dictionary = {}
+    for index, column in enumerate(cursor.description):
+        dictionary[column[0]] = row[index]
+    return dictionary
 
 if __name__ == '__main__':
     app.run(debug=True)
