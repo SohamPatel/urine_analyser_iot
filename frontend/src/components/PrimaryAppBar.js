@@ -16,10 +16,15 @@ import AccountCircle from '@material-ui/icons/AccountCircle';
 import MailIcon from '@material-ui/icons/Mail';
 import NotificationsIcon from '@material-ui/icons/Notifications';
 import MoreIcon from '@material-ui/icons/MoreVert';
+import Button from '@material-ui/core/Button';
+import { Link } from 'react-router-dom'
 
 const styles = theme => ({
   root: {
     width: '100%',
+  },
+  button: {
+    margin: theme.spacing.unit,
   },
   grow: {
     flexGrow: 1,
@@ -184,6 +189,9 @@ class PrimaryAppBar extends React.Component {
                 }}
               />
             </div>
+            <Button variant="contained" color="secondary" className={classes.button} component={Link} to="/test-sensor-data">
+              Test Sensor Data
+            </Button>
             <div className={classes.grow} />
             <div className={classes.sectionDesktop}>
               <IconButton color="inherit">
