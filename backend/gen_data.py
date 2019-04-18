@@ -2,7 +2,6 @@ import sqlite3
 import json
 import random
 import names
-import webcolors
 import datetime
 
 
@@ -210,26 +209,6 @@ def gen_patient(num, db_file):
     cur.close()
 
 
-def closest_colour(requested_colour):
-    min_colours = {}
-    for key, name in webcolors.css21_hex_to_names.items():
-        r_c, g_c, b_c = webcolors.hex_to_rgb(key)
-        rd = (r_c - requested_colour[0]) ** 2
-        gd = (g_c - requested_colour[1]) ** 2
-        bd = (b_c - requested_colour[2]) ** 2
-        min_colours[(rd + gd + bd)] = name
-    return min_colours[min(min_colours.keys())]
-
-
-def get_colour_name(requested_colour):
-    try:
-        colour = webcolors.rgb_to_name(requested_colour, spec='css2')
-        return colour
-    except ValueError:
-        colour = closest_colour(requested_colour)
-        return colour
-
-
 def random_date(start, end):
     return start + datetime.timedelta(seconds=random.randint(0, int((end - start).total_seconds())),)
 
@@ -241,7 +220,6 @@ if __name__ == '__main__':
     patient_num = 100
     sample_per_patient = 5
 
-
     # Generates table for patient records
     gen_patient_record_table(db_file)
 
@@ -250,5 +228,5 @@ if __name__ == '__main__':
     # Generates patients
     # gen_patient(patient_num, db_file)
 
-    gen_normal_data(sample_per_patient, db_file)
-
+    # Generates urine sample data for every patient
+    # gen_normal_data(sample_per_patient, db_file)
