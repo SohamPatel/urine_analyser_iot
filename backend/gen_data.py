@@ -39,128 +39,50 @@ def gen_patient_record_table(db_file):
     conn.close()
 
 
-def gen_normal_data(num, db_file):
-    start_date = datetime.datetime.strptime('1/4/2019 0:01 AM', '%d/%m/%Y %H:%M %p')
-    end_date = datetime.datetime.strptime('1/5/2019 23:59 PM', '%d/%m/%Y %H:%M %p')
+def gen_urine_data(num, db_file):
+    # Generates num patient & urine records. 65% urine records will be good, 20% low urgency, 10% medium, 5% high
 
     db_conn = create_connection(db_file)
     cur = db_conn.cursor()
     cur.execute("SELECT id FROM patient")
     rows = cur.fetchall()
 
-    for row in rows:
-        id = row[0]
-        # ##################################################################
-        # gravity range: 1.002 to 1.035  ,gravity>1.035 = dehydration
-        # Decreased: <1.005
-        # Inability to concentrate urine or excessive hydration (volume resuscitation with IV fluids)
-        # Nephrogenic diabetes insipidus, acute golmerulonephritis, pyelonephritis, acute tubular necrosis
-        # Falsely low specific gravity can be associated with alkaline urine
-        #
-        # Fixed: 1.010
-        # In end stage renal disease, specific gravity tends towards 1.010. Chronic Renal Failure (CRF), Chronic glomerulonephritis (GN)
-        #
-        # Increased: >1.0035
-        # Dehydration (fever, vomiting, diarrohea), SIADH, adrenal insufficiency, pre-renal renal failure, hyponatraemia with oedema, liver failure, CCF, nephrotic syndrome
-        # Elevation in specific gravity also occurs with glycosuria (e.g. diabetes mellitus or IV glucose administration), proteinuria, IV contrast, urine contamination, LMW dextran solutions (colloid)
+    for i in range(num):
+        urine_rec = {}
+        gen_good_data(int(len(rows)*0.65), urine_rec)
+        gen_bad_data(int(len(rows)*0.20), urine_rec, 'low')
+        gen_bad_data(int(len(rows) * 0.10), urine_rec, 'medium')
+        gen_bad_data(int(len(rows) * 0.05), urine_rec, 'high')
+        urine_rec['id'] = [row[0] for row in rows]
 
-        grav_low = 1.002
-        grav_up = 1.035
-        gravity = [round(random.uniform(grav_low, grav_up), 3) for _ in range(num)]
-
-        # ##################################################################
-        # ph range: 4.8 to 8, usually around 6
-
-        ph_low = 4.8
-        ph_up = 8.0
-        ph = [round(random.uniform(ph_low, ph_up), 1) for _ in range(num)]
-
-        # ##################################################################
-        # bilirubin: Boolean Value, if True, implicates liver diseases. Associated with Dark urine
-
-        bilirubin = [0] * num
-
-        # ##################################################################
-        # urobilinogen: 0.2-1.0 mg/dL
-
-        urobilinogen_low = 0.2
-        urobilinogen_up = 1.0
-        urobilinogen = [round(random.uniform(urobilinogen_low, urobilinogen_up), 2) for _ in range(num)]
-
-        # ##################################################################
-        # protein: <10mg/100mL
-
-        protein_low = 0
-        protein_up = 10
-        protein = [round(random.uniform(protein_low, protein_up), 1) for _ in range(num)]
-
-        # ##################################################################
-        # glucose: 0 to 0.8 mmol/L
-
-        glucose_low = 0
-        glucose_up = 0.8
-        glucose = [round(random.uniform(glucose_low, glucose_up), 1) for _ in range(num)]
-
-        # ##################################################################
-        # ketones:
-        # Small: <20 mg/dL
-        # Moderate: 30 to 40 mg/dL
-        # Large: >80 mg/dL
-
-        ketones_low = 0
-        ketones_up = 100
-        ketones = [round(random.uniform(ketones_low, ketones_up), 1) for _ in range(num)]
-
-        # ##################################################################
-        # hemoglobin:
-        # male: 13.5 to 17.5 grams/dL
-        # female: 12.0 to 15.5 grams/dL
-
-        hemoglobin_low = 12
-        hemoglobin_up = 17.5
-        hemoglobin = [round(random.uniform(hemoglobin_low, hemoglobin_up), 1) for _ in range(num)]
-
-        # ##################################################################
-        # myoglobin:
-        # Normal: False
-        # Abnormal: True
-
-        myoglobin = [0] * num
-
-        # ##################################################################
-        # Leucocytes: Integer, 0 to 5
-
-        leucocytes = [random.randrange(0, 6) for _ in range(num)]
-
-        # ##################################################################
-        # nitrite:
-        # If present -> Have infection
-        # If not present -> Still may have infection
-
-        nitrite = [0] * num
-
-        # ##################################################################
-        # ascorbic_acid: Boolean value. If True, test sample is useless
-
-        ascorbic_acid = [0] * num
-
-        # ##################################################################
-        # colour: randomly pick colours from [yello, white, green]
-        colour = ['yellow', 'white', 'green']
-        colour = [random.choice(colour) for _ in range(num)]
-
-
-        ####################################################################
-        # generates sample time
-        sample_time = [random_date(start_date, end_date) for _ in range(num)]
-
-        sql = 'INSERT INTO patient_urine_records (patient_id, gravity, ph, bilirubin, urobilinogen, protein, glucose, ketones, hemoglobin, myoglobin, leukocyte_esterase, nitrite, ' \
-            'ascorbic_acid, colour, sample_time) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)'
-        for entry in range(num):
-            cur.execute(sql, (id, gravity[entry], ph[entry], bilirubin[entry], urobilinogen[entry], protein[entry], glucose[entry], ketones[entry], hemoglobin[entry], myoglobin[entry],
-                        leucocytes[entry], nitrite[entry], ascorbic_acid[entry], colour[entry], sample_time[entry]))
-    db_conn.commit()
+        for i in range(len(urine_rec['id'])):
+            sql = 'INSERT INTO patient_urine_records (patient_id, gravity, ph, bilirubin, urobilinogen, protein, glucose, ketones, hemoglobin, myoglobin, leukocyte_esterase, nitrite, ' \
+                  'ascorbic_acid, colour, sample_time) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)'
+            cur.execute(sql, (urine_rec['id'][i], urine_rec['gravity'][i], urine_rec['ph'][i], urine_rec['bilirubin'][i], urine_rec['urobilinogen'][i], urine_rec['protein'][i],
+                              urine_rec['glucose'][i], urine_rec['ketones'][i], urine_rec['hemoglobin'][i], urine_rec['myoglobin'][i], urine_rec['leukocyte_esterase'][i], urine_rec['nitrite'][i],
+                              urine_rec['ascorbic_acid'][i], urine_rec['colour'][i], urine_rec['sample_time'][i]))
+        db_conn.commit()
     cur.close()
+
+
+def gen_good_data(num, urine_rec):
+    good_funcs = {'gravity': good_gravity, 'ph': good_ph, 'bilirubin': good_bilirubin, 'urobilinogen': good_urobilinogen, 'protein': good_protein, 'glucose': good_glucose, 'ketones': good_ketones,
+                  'hemoglobin': good_hemoglobin, 'myoglobin': good_myoglobin, 'leukocyte_esterase': good_leucocytes, 'nitrite': good_nitrite, 'colour': good_colour}
+    properties = ['gravity', 'ph', 'bilirubin', 'urobilinogen', 'protein', 'glucose', 'ketones', 'hemoglobin', 'myoglobin', 'leukocyte_esterase', 'nitrite', 'colour']
+    start_date = datetime.datetime.strptime('1/4/2019 0:01 AM', '%d/%m/%Y %H:%M %p')
+    end_date = datetime.datetime.strptime('1/5/2019 23:59 PM', '%d/%m/%Y %H:%M %p')
+
+    for i, property in enumerate(properties):
+        try:
+            urine_rec[property] += good_funcs[property](num)
+        except KeyError:
+                urine_rec[property] = good_funcs[property](num)
+    try:
+        urine_rec['ascorbic_acid'] += [0] * num
+        urine_rec['sample_time'] += [random_date(start_date, end_date) for _ in range(num)]
+    except KeyError:
+        urine_rec['ascorbic_acid'] = [0] * num
+        urine_rec['sample_time'] = [random_date(start_date, end_date) for _ in range(num)]
 
 
 def gen_staff(num, db_file):
@@ -178,20 +100,6 @@ def gen_staff(num, db_file):
         cur.execute('INSERT INTO staff (occupation,first_name, last_name, mobile) VALUES (?,?,?,?)', (occupation, first_name, last_name, mobile))
     db_conn.commit()
     cur.close()
-
-
-# def gen_ward(staff_num, ward_num, db_file):
-#     db_conn = create_connection(db_file)
-#     cur = db_conn.cursor()
-#
-#     nurse_per_ward = (staff_num//2) // ward_num
-#     for i in range(ward_num):
-#         for j in range(nurse_per_ward):
-#             cur_ward = j
-#         pass
-#
-#     db_conn.commit()
-#     cur.close()
 
 
 def gen_patient(num, db_file):
@@ -213,6 +121,236 @@ def random_date(start, end):
     return start + datetime.timedelta(seconds=random.randint(0, int((end - start).total_seconds())),)
 
 
+def gen_bad_data(num, urine_rec, priority):
+    bad_funcs = {'gravity': bad_gravity, 'ph': bad_ph, 'bilirubin': bad_bilirubin, 'urobilinogen': bad_urobilinogen, 'protein': bad_protein, 'glucose': bad_glucose, 'ketones': bad_ketones,
+                 'hemoglobin': bad_hemoglobin, 'myoglobin': bad_myoglobin, 'leukocyte_esterase': bad_leucocytes, 'nitrite': bad_nitrite, 'colour': bad_colour}
+    good_funcs = {'gravity': good_gravity, 'ph': good_ph, 'bilirubin': good_bilirubin, 'urobilinogen': good_urobilinogen, 'protein': good_protein, 'glucose': good_glucose, 'ketones': good_ketones,
+                  'hemoglobin': good_hemoglobin, 'myoglobin': good_myoglobin, 'leukocyte_esterase': good_leucocytes, 'nitrite': good_nitrite, 'colour': good_colour}
+    start_date = datetime.datetime.strptime('1/4/2019 0:01 AM', '%d/%m/%Y %H:%M %p')
+    end_date = datetime.datetime.strptime('1/5/2019 23:59 PM', '%d/%m/%Y %H:%M %p')
+    # Low priority: 1~2 properties are off
+    # Medium priority: 3~5 properties are off
+    # High priority: >6 properties are off
+    properties = ['gravity', 'ph', 'bilirubin', 'urobilinogen', 'protein', 'glucose', 'ketones', 'hemoglobin', 'myoglobin', 'leukocyte_esterase', 'nitrite', 'colour']
+    random.shuffle(properties)
+
+    if priority == 'low':
+        prop_num = random.randint(1, 2)
+    elif priority == 'medium':
+        prop_num = random.randint(3, 5)
+    else:
+        prop_num = random.randint(6, 13)
+
+    for i, property in enumerate(properties):
+        if i < prop_num:
+            try:
+                urine_rec[property] += bad_funcs[property](num)
+            except KeyError:
+                urine_rec[property] = bad_funcs[property](num)
+        else:
+            try:
+                urine_rec[property] += good_funcs[property](num)
+            except KeyError:
+                urine_rec[property] = good_funcs[property](num)
+    try:
+        urine_rec['ascorbic_acid'] += [0] * num
+        urine_rec['sample_time'] += [random_date(start_date, end_date) for _ in range(num)]
+    except KeyError:
+        urine_rec['ascorbic_acid'] = [0] * num
+        urine_rec['sample_time'] = [random_date(start_date, end_date) for _ in range(num)]
+
+
+def bad_gravity(num):
+    # gravity range: 1.002 to 1.035, gravity > 1.035 = dehydration
+    if random.randint(0, 1) % 2 == 0:
+        grav_low = 0
+        grav_up = 1.001
+    else:
+        grav_low = 1.036
+        grav_up = 2.000
+    gravity = [round(random.uniform(grav_low, grav_up), 3) for _ in range(num)]
+    return gravity
+
+
+def good_gravity(num):
+    grav_low = 1.002
+    grav_up = 1.035
+    gravity = [round(random.uniform(grav_low, grav_up), 3) for _ in range(num)]
+    return gravity
+
+
+def bad_ph(num):
+    # ph range: 4.8 to 8, usually around 6
+    if random.randint(0, 1) % 2 == 0:
+        ph_low = 3
+        ph_up = 4.7
+    else:
+        ph_low = 8.1
+        ph_up = 9.8
+    ph = [round(random.uniform(ph_low, ph_up), 1) for _ in range(num)]
+    return ph
+
+
+def good_ph(num):
+    ph_low = 4.8
+    ph_up = 8.0
+    ph = [round(random.uniform(ph_low, ph_up), 1) for _ in range(num)]
+    return ph
+
+
+def bad_bilirubin(num):
+    # bilirubin: Boolean Value, if True, implicates liver diseases. Associated with Dark urine
+    return [1]*num
+
+
+def good_bilirubin(num):
+    return [0]*num
+
+
+def bad_urobilinogen(num):
+    # urobilinogen: 0.2-1.0 mg/dL
+    if random.randint(0, 1) % 2 == 0:
+        urobilinogen_low = 0
+        urobilinogen_up = 0.19
+    else:
+        urobilinogen_low = 1.01
+        urobilinogen_up = 1.50
+    urobilinogen = [round(random.uniform(urobilinogen_low, urobilinogen_up), 2) for _ in range(num)]
+    return urobilinogen
+
+
+def good_urobilinogen(num):
+    urobilinogen_low = 0.2
+    urobilinogen_up = 1.0
+    urobilinogen = [round(random.uniform(urobilinogen_low, urobilinogen_up), 2) for _ in range(num)]
+    return urobilinogen
+
+
+def bad_protein(num):
+    # protein: <10mg/100mL
+    protein_low = 10
+    protein_up = 50
+    protein = [round(random.uniform(protein_low, protein_up), 1) for _ in range(num)]
+    return protein
+
+
+def good_protein(num):
+    # protein: <10mg/100mL
+    protein_low = 0
+    protein_up = 10
+    protein = [round(random.uniform(protein_low, protein_up), 1) for _ in range(num)]
+    return protein
+
+
+def bad_glucose(num):
+    # glucose: 0 to 0.8 mmol/L
+    glucose_low = 0.8
+    glucose_up = 2.0
+    glucose = [round(random.uniform(glucose_low, glucose_up), 1) for _ in range(num)]
+    return glucose
+
+
+def good_glucose(num):
+    # glucose: 0 to 0.8 mmol/L
+    glucose_low = 0
+    glucose_up = 0.8
+    glucose = [round(random.uniform(glucose_low, glucose_up), 1) for _ in range(num)]
+    return glucose
+
+
+def bad_ketones(num):
+    # ketones:
+    # Small: <20 mg/dL
+    # Moderate: 30 to 40 mg/dL
+    # Large: >80 mg/dL
+
+    ketones_low = 51
+    ketones_up = 100
+    ketones = [round(random.uniform(ketones_low, ketones_up), 1) for _ in range(num)]
+    return ketones
+
+
+def good_ketones(num):
+    # ketones:
+    # Small: <20 mg/dL
+    # Moderate: 30 to 40 mg/dL
+    # Large: >80 mg/dL
+
+    ketones_low = 0
+    ketones_up = 50
+    ketones = [round(random.uniform(ketones_low, ketones_up), 1) for _ in range(num)]
+    return ketones
+
+
+def bad_hemoglobin(num):
+    # hemoglobin:
+    # male: 13.5 to 17.5 grams/dL
+    # female: 12.0 to 15.5 grams/dL
+    if random.randint(0, 1) % 2 == 0:
+        hemoglobin_low = 0
+        hemoglobin_up = 11.99
+    else:
+        hemoglobin_low = 17.51
+        hemoglobin_up = 20
+    hemoglobin = [round(random.uniform(hemoglobin_low, hemoglobin_up), 1) for _ in range(num)]
+    return hemoglobin
+
+
+def good_hemoglobin(num):
+    # hemoglobin:
+    # male: 13.5 to 17.5 grams/dL
+    # female: 12.0 to 15.5 grams/dL
+    hemoglobin_low = 12.0
+    hemoglobin_up = 17.5
+    hemoglobin = [round(random.uniform(hemoglobin_low, hemoglobin_up), 1) for _ in range(num)]
+    return hemoglobin
+
+
+def bad_myoglobin(num):
+    # myoglobin:
+    # Normal: False
+    # Abnormal: True
+    return [1]*num
+
+
+def good_myoglobin(num):
+    return [0]*num
+
+
+def bad_leucocytes(num):
+    # Leucocytes: Integer, 0 to 5
+    leucocytes = [random.randrange(6, 10) for _ in range(num)]
+    return leucocytes
+
+
+def good_leucocytes(num):
+    leucocytes = [random.randrange(0, 5) for _ in range(num)]
+    return leucocytes
+
+
+def bad_nitrite(num):
+    # nitrite:
+    # If present -> Have infection
+    # If not present -> Still may have infection
+    return [1] * num
+
+
+def good_nitrite(num):
+    return [0] * num
+
+
+def bad_colour(num):
+    colours = ['maroon', 'red', 'orange', 'olive', 'purple', 'fuchsia', 'lime', 'navy', 'blue', 'aqua', 'teal', 'black', 'gray', 'silver']
+    colours = [random.choice(colours) for _ in range(num)]
+    return colours
+
+
+def good_colour(num):
+    colours = ['yellow', 'white', 'green']
+    colours = [random.choice(colours) for _ in range(num)]
+    return colours
+
+
 if __name__ == '__main__':
     # Value definitions
     db_file = 'hospital.db'
@@ -228,5 +366,5 @@ if __name__ == '__main__':
     # Generates patients
     # gen_patient(patient_num, db_file)
 
-    # Generates urine sample data for every patient
-    # gen_normal_data(sample_per_patient, db_file)
+    # Generates urine sample data for every patient. Includes good & bad data
+    # gen_urine_data(sample_per_patient, db_file)
