@@ -1,11 +1,13 @@
 import sqlite3
-from flask import Flask, request
+from flask import Flask, request, jsonify
 import requests
 import re
 import json
+from flask_cors import CORS
 
 db_path = 'hospital.db'
 app = Flask(__name__)
+CORS(app)
 
 # Telstra API Credentials
 TAPI_CLIENT_ID = 'WTM8cZvo1xzWKTnDgIGwIdiblmVDhxaB'
@@ -141,8 +143,8 @@ def sensor_data():
         # print(sms_response.text)
         # print(sms_response.status_code)
         # # ========== SMS MESSAGING END ============
-
-        return 'SUCCESS.\r\r' + outcome
+        
+        return jsonify({'data': outcome})
     else:
         return 'Error 405 - Method Not Allowed'
 
