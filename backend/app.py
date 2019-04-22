@@ -5,7 +5,7 @@ import re
 import json
 from flask_cors import CORS
 
-db_path = 'hospital.db'
+db_path = 'hospital_edit.db'
 app = Flask(__name__)
 CORS(app)
 
@@ -24,7 +24,7 @@ def sensor_data():
         # Example Data
         # {
         #     "deviceID": "34124412",
-        #     "patientID": "92152244",
+        #     "patientID": "3",
         #     "sensorData": {
         #         "colour": {
         #             "R": 12,
@@ -32,7 +32,7 @@ def sensor_data():
         #             "B": 189
         #         },
         #         "pH": 6.2,
-        #         "glucose": "5 mmol/L",
+        #         "glucose": "100 mmol/L",
         #         "protein": "0.7 g/l"
         #     }
         # }
@@ -43,12 +43,16 @@ def sensor_data():
         protein = float(sensor_data['sensorData']['protein'].split()[0])
 
         # Retrieve nurse contact
-        result = query_db('''SELECT s.mobile FROM patient p
+        result = query_db('''SELECT s.mobile, p.first_name, p.last_name, w.room FROM patient p
                                 JOIN ward w ON w.patient=p.id
                                 JOIN staff s ON w.nurse=s.id
                                 WHERE p.id = ?''', (patientID,))[0]
         
         nurse_contact = result['mobile']
+        patientFirstName = result['first_name']
+        patientLastName = result['last_name']
+        patientWard = result['room']
+
         print('Nurse contact number:', nurse_contact)
 
         result = query_db('''SELECT s.mobile FROM patient p
@@ -60,7 +64,8 @@ def sensor_data():
 
         # TODO: Update EMR
 
-        outcome = ""
+        alertFor = 'none'
+        outcome = "Urine Test Alert (Ward " + patientWard + ") - " + patientFirstName + " " + patientLastName + " (" + patientID + ")\r"
 
         # https://www.aci.health.nsw.gov.au/__data/assets/pdf_file/0007/285811/Lets_Get_Started_-_Urinalysis.pdf
 
@@ -70,78 +75,96 @@ def sensor_data():
     #                            https://www.korwater.com/pages/hydration-urine-test
         if (colour['B'] < 40):
             # Extremely Dehydrated, may indicate blood in urine or kidney disease, alert doctor
-            outcome += "Colour indicates extreme dehydration, possible blood in urine or kidney disease."
+            outcome += "\rColour indicates extreme dehydration, possible blood in urine or kidney disease."
+            alertFor = 'doctor'
         elif (colour['B'] >= 40 and colour['B'] < 100):
             # Dehydration, alert staff to monitor and hydrate patient
-            outcome += "Colour indicates dehyrdation."
+            outcome += "\rColour indicates dehyrdation."
+            alertFor = 'nurse'
         elif (colour['B'] >= 100 and colour['B'] < 170):
             # Minimal Dehydration
-            outcome += "Colour indicates minimal dehyrdation."
+            # outcome += "Colour indicates minimal dehyrdation."
+            pass
+
         elif (colour['B'] >= 170):
             # Hydrated
-            outcome += "Colour indicates optimal hyrdration."
+            # outcome += "Colour indicates optimal hyrdration."
+            pass
 
 
         # TODO: Analyse pH - https://betterhealthclinic.com.au/urine-tests/
         if (ph < 5.5):
             # Very acidic, alert doctor
             outcome += "\rpH level indicates very acidic urine."
+            alertFor = 'doctor'
+            
         elif (ph >= 5.5 and ph < 6.5):
             # Acidic, alert staff to change diet to more alkaline and/or alkaline mineral supplements
             outcome += "\rpH level indicates acidic urine."
+            if (alertFor == 'none'):
+                alertFor = 'nurse'
+
         elif (ph >= 6.5 and ph < 7.5):
             # Optimal, don't alert
-            outcome += "\rpH level is optimal."
+            # outcome += "\rpH level is optimal."
+            pass
+
         elif (ph >= 7.5):
             # Alkaline, alert staff to monitor and acidify via diet if needed
             outcome += "\rpH level indicates alkaline urine."
+            if (alertFor == 'none'):
+                alertFor = 'nurse'
 
 
         # TODO: Analyse Glucose - https://www.healthline.com/health/glucose-test-urine#results
         if (glucose >= 0 and glucose <= 0.8):
             # Normal glucose level
-            outcome += "\rNormal glucose level."
+            # outcome += "\rNormal glucose level."
+            pass
         else:
             # Possible diabetes
             outcome += "\rGlucose level inicates possible diabetes."
+            alertFor = 'doctor'
         
 
-        # TODO: Analyse Protein
-        outcome += "\rUnable to analyse Protein level."
+        # # TODO: Analyse Protein
+        # outcome += "\rUnable to analyse Protein level."
 
 
         # Send Notification to either Doctor or staff based on analysis (UNCOMMENT BELOW TO MAKE IT WORK)
         # # ========== SMS MESSAGING START ============
-        # # Get authorisation token
-        # auth_payload = {
-        #     'client_id' : TAPI_CLIENT_ID,
-        #     'client_secret': TAPI_CLIENT_SECRET,
-        #     'grant_type' : 'client_credentials',
-        #     'scope' : 'NSMS'
-        # }
-        # access_token = json.loads(requests.post("https://tapi.telstra.com/v2/oauth/token", data=auth_payload).text)['access_token']
-        
-        # # Provision application
-        # provisioning_headers = {
-        #     'Content-Type': "application/json",
-        #     'Authorization': f"Bearer {access_token}"
-        # }
-        # provisioning_number = json.loads(requests.post("https://tapi.telstra.com/v2/messages/provisioning/subscriptions", data=json.dumps({}), headers=provisioning_headers).text)['destinationAddress']
+        # if alertFor != 'none':
+        #     # Get authorisation token
+        #     auth_payload = {
+        #         'client_id' : TAPI_CLIENT_ID,
+        #         'client_secret': TAPI_CLIENT_SECRET,
+        #         'grant_type' : 'client_credentials',
+        #         'scope' : 'NSMS'
+        #     }
+        #     access_token = json.loads(requests.post("https://tapi.telstra.com/v2/oauth/token", data=auth_payload).text)['access_token']
+            
+        #     # Provision application
+        #     provisioning_headers = {
+        #         'Content-Type': "application/json",
+        #         'Authorization': f"Bearer {access_token}"
+        #     }
+        #     provisioning_number = json.loads(requests.post("https://tapi.telstra.com/v2/messages/provisioning/subscriptions", data=json.dumps({}), headers=provisioning_headers).text)['destinationAddress']
 
-        # # Send SMS
-        # sms_message = outcome
-        # sms_payload = {
-        #     'to': doctor_contact,
-        #     'from': provisioning_number,
-        #     'body': sms_message
-        # }
-        # sms_headers = {
-        #     'Content-Type': "application/json",
-        #     'Authorization': f"Bearer {access_token}"
-        # }
-        # sms_response = requests.post("https://tapi.telstra.com/v2/messages/sms", data=json.dumps(sms_payload), headers=sms_headers)
-        # print(sms_response.text)
-        # print(sms_response.status_code)
+        #     # Send SMS
+        #     sms_message = outcome
+        #     sms_payload = {
+        #         'to': doctor_contact if alertFor == 'doctor' else nurse_contact,
+        #         'from': provisioning_number,
+        #         'body': sms_message
+        #     }
+        #     sms_headers = {
+        #         'Content-Type': "application/json",
+        #         'Authorization': f"Bearer {access_token}"
+        #     }
+        #     sms_response = requests.post("https://tapi.telstra.com/v2/messages/sms", data=json.dumps(sms_payload), headers=sms_headers)
+        #     print(sms_response.text)
+        #     print(sms_response.status_code)
+            
         # # ========== SMS MESSAGING END ============
         
         return jsonify({'data': outcome})
