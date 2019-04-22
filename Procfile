@@ -1,1 +1,1 @@
-web: gunicorn --pythonpath backend app.wsgi
+web: gunicorn --pythonpath flask backend.wsgi
