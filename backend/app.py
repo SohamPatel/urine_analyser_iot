@@ -6,6 +6,8 @@ import json
 from flask_cors import CORS
 
 db_path = 'hospital_edit.db'
+emr_path = 'emr.db'
+
 app = Flask(__name__)
 CORS(app)
 
@@ -24,7 +26,7 @@ def sensor_data():
         # Example Data
         # {
         #     "deviceID": "34124412",
-        #     "patientID": "3",
+        #     "patientID": "DCE5AEB8-6DB9-4106-8AE4-02CCC5C23741",
         #     "sensorData": {
         #         "colour": {
         #             "R": 12,
@@ -32,7 +34,7 @@ def sensor_data():
         #             "B": 189
         #         },
         #         "pH": 6.2,
-        #         "glucose": "100 mmol/L",
+        #         "glucose": "1.0 mmol/L",
         #         "protein": "0.7 g/l"
         #     }
         # }
@@ -42,6 +44,7 @@ def sensor_data():
         glucose = float(sensor_data['sensorData']['glucose'].split()[0])
         protein = float(sensor_data['sensorData']['protein'].split()[0])
 
+        print(patientID)
         # Retrieve nurse contact
         result = query_db('''SELECT s.mobile, p.first_name, p.last_name, w.room FROM patient p
                                 JOIN ward w ON w.patient=p.id
@@ -65,7 +68,7 @@ def sensor_data():
         # TODO: Update EMR
 
         alertFor = 'none'
-        outcome = "Urine Test Alert (Ward " + patientWard + ") - " + patientFirstName + " " + patientLastName + " (" + patientID + ")\r"
+        outcome = "PATIENT: " + patientFirstName + " " + patientLastName + " (Ward " + patientWard + ")\r"
 
         # https://www.aci.health.nsw.gov.au/__data/assets/pdf_file/0007/285811/Lets_Get_Started_-_Urinalysis.pdf
 
@@ -75,7 +78,7 @@ def sensor_data():
     #                            https://www.korwater.com/pages/hydration-urine-test
         if (colour['B'] < 40):
             # Extremely Dehydrated, may indicate blood in urine or kidney disease, alert doctor
-            outcome += "\rColour indicates extreme dehydration, possible blood in urine or kidney disease."
+            outcome += "\rColour indicates extreme dehydration."
             alertFor = 'doctor'
         elif (colour['B'] >= 40 and colour['B'] < 100):
             # Dehydration, alert staff to monitor and hydrate patient
@@ -95,12 +98,12 @@ def sensor_data():
         # TODO: Analyse pH - https://betterhealthclinic.com.au/urine-tests/
         if (ph < 5.5):
             # Very acidic, alert doctor
-            outcome += "\rpH level indicates very acidic urine."
+            outcome += "\rpH level indicates very acidic urine (" + str(ph) + ")."
             alertFor = 'doctor'
             
         elif (ph >= 5.5 and ph < 6.5):
             # Acidic, alert staff to change diet to more alkaline and/or alkaline mineral supplements
-            outcome += "\rpH level indicates acidic urine."
+            outcome += "\rpH level indicates acidic urine (" + str(ph) + ")."
             if (alertFor == 'none'):
                 alertFor = 'nurse'
 
@@ -111,7 +114,7 @@ def sensor_data():
 
         elif (ph >= 7.5):
             # Alkaline, alert staff to monitor and acidify via diet if needed
-            outcome += "\rpH level indicates alkaline urine."
+            outcome += "\rpH level indicates alkaline urine (" + str(ph) + " mmol/L)."
             if (alertFor == 'none'):
                 alertFor = 'nurse'
 
@@ -123,7 +126,7 @@ def sensor_data():
             pass
         else:
             # Possible diabetes
-            outcome += "\rGlucose level inicates possible diabetes."
+            outcome += "\rGlucose level is not normal (" + str(glucose) + " mmol/L)."
             alertFor = 'doctor'
         
 
@@ -185,6 +188,27 @@ def query_db(query, args):
 
 def execute_db(query, args):
     conn = sqlite3.connect(db_path)
+    cur = conn.cursor()
+    cur.execute(query, args)
+    conn.commit()
+    cur.close()
+    conn.close()
+    return
+
+def query_emr(query, args):
+    conn = sqlite3.connect(emr_path)
+    conn.row_factory = dict_factory
+    cur = conn.cursor()
+    cur.execute(query, args)
+    result = cur.fetchall()
+    conn.close()
+    if result == None:
+        return result[0]
+    else:
+        return result
+
+def execute_emr(query, args):
+    conn = sqlite3.connect(emr_path)
     cur = conn.cursor()
     cur.execute(query, args)
     conn.commit()
