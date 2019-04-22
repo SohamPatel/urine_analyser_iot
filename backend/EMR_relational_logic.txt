@@ -1,0 +1,45 @@
+from Hospital.db Patient hp, patient_urine_records hur, Staff hs, Ward hw
+from emr.db  AdmissionsCorePopulatedTable ea, AdmissionsDiagnosesCorePopulatedTable ed, LabsCorePopulatedTable elr, PatientCorePopulatedTable ep
+
+//get current patient´s id num & assume current date time is the lab times
+pid = ###
+date = ####
+
+if hp.id = pid && hp.first_name = ep.PatientFirstName && hp.last_name.PatientLastName && hp.dob = PatientDateOfBirth then:
+	x = PatientID
+	
+
+//gets current Admission ID for record input into emr
+if ep.PatientID = x && ea.AdmissionStartDate < date && ea.AdmissionEndDate = NULL:
+	z = AdmissionID;
+
+//create new rows in emr LabsCorePopulateTable (lab results table)
+if hur.sample_time = date && hur.patient_id = pid:
+	addRow(gravity, hur.gravity, //Addunits)
+	addRow(pH, hur.ph, pH)
+	addRow(bilirubin, hur.bilirubin, //Add units)
+	addRow(urobilinogen, hur.urobilinogen, //Add units)
+	addRow(protein, hur.protein, //Add units)
+	addRow(glucose, hur.glucose, //Add units)
+	addRow(ketones, hur.ketones, //Add units)
+	addRow(hemoglobin, hur.hemoglobin, //Add units)
+	addRow(myoglobin, hur.myoglobin, //Add units)
+	addRow(leukocyte_esterase, hur.leukocyte_esterase, //Add units)
+	addRow(nitrite, hur.nitrite, //Add units)
+	addRow(ascorbic_acid, hur.ascorbic_acid, //Add units)
+	addRow(colour, hur.colour, NULL)
+	
+//Add row for each data above
+void addRow(testType, result, units):
+	elr.PatientID = x
+	elr.AdmissionID = z
+	elr.LabName = string('UrineAnalysis: ' + testType)
+	elr.LabValue = g
+	elr.LabUnits = units
+	elr.LabDateTime = date
+
+//to compare previous results of measurements
+keyword = ######
+
+if elr.PatientID = x && elr.LabName = string('UrineAnalysis: ' + keyword):
+	// produces all measurments for keyword do as you please with it

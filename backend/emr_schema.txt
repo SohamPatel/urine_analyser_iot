@@ -1,0 +1,48 @@
+EMR Schema:
+
+PatientCorePopulatedTable:
+contains all patient personal information
+
+Rows of interest for comparisons are:
+PatientID: size = 36, 32 alphanumeric split as unique for all patients (primary key)
+PatientFirstName: patient first name max size 30
+PatientLastName: patient last name max size 30
+PatientDateOfBirth: patient date of birth
+
+rest are not really needed but are in an emr:
+PatientGender: Listed as either M/F
+PatientRace:
+PatientMaritalStatus:
+PatientLanguage:
+PatientPopulationPercentageBelowPoverty:
+
+_____________________________________________________________________________________
+
+AdmissionsCorePopulatedTable:
+lists all visits to hospital
+PatientID: foreign key from PatientCorePopulatedTable
+AdmissionID: lists individual visits to hospital from 1...
+AdmissionStartDate: datetime patient was admitted to hospital
+AdmissionEndDate: either null or datetime patient exited hospital
+
+_____________________________________________________________________________________
+
+LabsCorePopulatedTable:
+contains all lab results this will be used to store the sensor data
+
+PatientID: foreign key from PatientCorePopulatedTable
+AdmissionID: foreign key from AdmissionsCorePopulatedTable
+LabName: Kind of test performed (size 50)
+LabValue: type string for convenience of results (size 10)
+LabUnits: type string units of measuremnet (size 5)
+LabDateTime: datetime experiments was performed
+
+_____________________________________________________________________________________
+
+AdmissionsCorePopulatedTable:
+This table won´t be used as it is for diagnostics.
+
+PatientID: foreign key from PatientCorePopulatedTable
+AdmissionID: foreign key from AdmissionsCorePopulatedTable
+PrimaryDiagnosisCode
+PrimaryDiagnosisDescription
