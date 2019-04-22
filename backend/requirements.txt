@@ -7,3 +7,4 @@ Werkzeug==0.15.2
 Webcolor==1.8.1
 names==0.3.0
 Flask-Cors==3.0.7
+gunicorn==19.9.0
