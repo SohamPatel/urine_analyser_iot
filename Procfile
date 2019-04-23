@@ -1,1 +1,1 @@
-web: bash deploy.sh $PORT
+web: gunicorn -b :$PORT backend:flask
