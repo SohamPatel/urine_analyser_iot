@@ -1,1 +1,1 @@
-web: gunicorn -b :5000 backend:app
+web: gunicorn -b :5000 backend:flask
