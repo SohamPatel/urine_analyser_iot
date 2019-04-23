@@ -4,6 +4,7 @@ import requests
 import re
 import json
 from flask_cors import CORS
+from os import environ
 
 db_path = 'hospital_edit.db'
 emr_path = 'emr.db'
@@ -225,5 +226,4 @@ def dict_factory(cursor, row):
     return dictionary
 
 if __name__ == '__main__':
-    port = int(os.environ.get('PORT', 5000))
-    app.run(host='0.0.0.0', port=port)
+    app.run(host='0.0.0.0', port=environ.get("PORT", 5000))
