@@ -1,1 +1,1 @@
-web: gunicorn -b :5000 backend:flask
+web: flask run
