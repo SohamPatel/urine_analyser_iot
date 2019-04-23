@@ -18,7 +18,7 @@ TAPI_CLIENT_SECRET = 'QMjsw8iQ1mDV4Utq'
 
 @app.route("/", methods = ['GET'])
 def home(): 
-    return jsonify({'test': 'test'})
+    return "website live"
 
 @app.route("/sensor_data", methods = ['POST'])
 def sensor_data():
