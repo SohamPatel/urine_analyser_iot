@@ -1,1 +1,1 @@
-web: bash deploy.sh
+web: bash deploy.sh $PORT
