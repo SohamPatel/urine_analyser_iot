@@ -1,2 +1,1 @@
-cd backend
-flask run
+cd backend && flask run
