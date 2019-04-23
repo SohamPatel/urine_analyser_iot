@@ -1,1 +1,1 @@
-web: gunicorn -b :$PORT backend:app
+web: gunicorn -b :$PORT --chdir backend flask:app
