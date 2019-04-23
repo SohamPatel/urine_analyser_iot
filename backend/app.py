@@ -138,40 +138,40 @@ def sensor_data():
 
 
         # Send Notification to either Doctor or staff based on analysis (UNCOMMENT BELOW TO MAKE IT WORK)
-        # # ========== SMS MESSAGING START ============
-        # if alertFor != 'none':
-        #     # Get authorisation token
-        #     auth_payload = {
-        #         'client_id' : TAPI_CLIENT_ID,
-        #         'client_secret': TAPI_CLIENT_SECRET,
-        #         'grant_type' : 'client_credentials',
-        #         'scope' : 'NSMS'
-        #     }
-        #     access_token = json.loads(requests.post("https://tapi.telstra.com/v2/oauth/token", data=auth_payload).text)['access_token']
+        # ========== SMS MESSAGING START ============
+        if alertFor != 'none':
+            # Get authorisation token
+            auth_payload = {
+                'client_id' : TAPI_CLIENT_ID,
+                'client_secret': TAPI_CLIENT_SECRET,
+                'grant_type' : 'client_credentials',
+                'scope' : 'NSMS'
+            }
+            access_token = json.loads(requests.post("https://tapi.telstra.com/v2/oauth/token", data=auth_payload).text)['access_token']
             
-        #     # Provision application
-        #     provisioning_headers = {
-        #         'Content-Type': "application/json",
-        #         'Authorization': f"Bearer {access_token}"
-        #     }
-        #     provisioning_number = json.loads(requests.post("https://tapi.telstra.com/v2/messages/provisioning/subscriptions", data=json.dumps({}), headers=provisioning_headers).text)['destinationAddress']
+            # Provision application
+            provisioning_headers = {
+                'Content-Type': "application/json",
+                'Authorization': f"Bearer {access_token}"
+            }
+            provisioning_number = json.loads(requests.post("https://tapi.telstra.com/v2/messages/provisioning/subscriptions", data=json.dumps({}), headers=provisioning_headers).text)['destinationAddress']
 
-        #     # Send SMS
-        #     sms_message = outcome
-        #     sms_payload = {
-        #         'to': doctor_contact if alertFor == 'doctor' else nurse_contact,
-        #         'from': provisioning_number,
-        #         'body': sms_message
-        #     }
-        #     sms_headers = {
-        #         'Content-Type': "application/json",
-        #         'Authorization': f"Bearer {access_token}"
-        #     }
-        #     sms_response = requests.post("https://tapi.telstra.com/v2/messages/sms", data=json.dumps(sms_payload), headers=sms_headers)
-        #     print(sms_response.text)
-        #     print(sms_response.status_code)
+            # Send SMS
+            sms_message = outcome
+            sms_payload = {
+                'to': doctor_contact if alertFor == 'doctor' else nurse_contact,
+                'from': provisioning_number,
+                'body': sms_message
+            }
+            sms_headers = {
+                'Content-Type': "application/json",
+                'Authorization': f"Bearer {access_token}"
+            }
+            sms_response = requests.post("https://tapi.telstra.com/v2/messages/sms", data=json.dumps(sms_payload), headers=sms_headers)
+            print(sms_response.text)
+            print(sms_response.status_code)
             
-        # # ========== SMS MESSAGING END ============
+        # ========== SMS MESSAGING END ============
         
         return jsonify({'data': outcome})
     else:
