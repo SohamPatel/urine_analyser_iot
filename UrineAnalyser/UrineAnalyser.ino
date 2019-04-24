@@ -41,6 +41,7 @@ const int redLED = 6;
 int redFrequency = 0;
 int greenFrequency = 0;
 int blueFrequency = 0;
+int reqCounter = 0;
 
 typedef union{
     float number;
@@ -71,7 +72,7 @@ void setup() {
   
   // Setting frequency-scaling to 20%
   digitalWrite(S0,HIGH);
-  digitalWrite(S1,LOW);
+  digitalWrite(S1,HIGH);
 
   Serial.begin(9600);
 
@@ -82,13 +83,13 @@ void setup() {
   // WISOL test
   flagInit = -1;
   while (flagInit == -1) {
-  Serial.println(""); // Make a clean restart
-  delay(1000);
-  PublicModeSF = 0;
-  flagInit = Isigfox->initSigfox();
-  Isigfox->testComms();
-  GetDeviceID();
-  //Isigfox->setPublicKey(); // set public key for usage with SNEK
+    Serial.println(""); // Make a clean restart
+    delay(1000);
+    PublicModeSF = 0;
+    flagInit = Isigfox->initSigfox();
+    Isigfox->testComms();
+    GetDeviceID();
+    //Isigfox->setPublicKey(); // set public key for usage with SNEK
   }
   
   // Init sensors on Thinxtra Module
@@ -102,8 +103,8 @@ void setup() {
   ledCounter = 0;
 //  pinMode(redLED, INPUT);
 
-  // Init timer to send a Sigfox message every 10 minutes
-  unsigned long sendInterval = 120000;
+  // Init timer to send a Sigfox message every 1 minutes
+  unsigned long sendInterval = 60000;
   timer.setInterval(sendInterval, timeIR);
 
   Serial.println(""); // Make a clean start
@@ -114,9 +115,9 @@ void loop() {
   timer.run();
   wdt_reset();
   watchdogCounter = 0;
-  getRed();
-  getGreen();
-  getBlue();
+//  getRed();
+//  getGreen();
+//  getBlue();
 }
 
 void Send_Sensors(){
@@ -126,48 +127,72 @@ void Send_Sensors(){
   FLOATUNION_t a_g;
 
   // Sending a float requires at least 4 bytes
-  // In this demo, the measure values (temperature, pressure, sensor) are scaled to ranged from 0-65535.
   // Thus they can be stored in 2 bytes
-  tempt.number = (uint16_t) (tSensors->getTemp() * 100);
-  Serial.print("Temp: "); Serial.println((float)tempt.number/100);
-  pressure.number =(uint16_t) (tSensors->getPressure()/3);
-  Serial.print("Pressure: "); Serial.println((float)pressure.number*3);
-  photo.number = (uint16_t) (tSensors->getPhoto() * 1000);
-  Serial.print("Photo: "); Serial.println((float)photo.number/1000);
-
-  xyz_g = (acceleration_xyz *)malloc(sizeof(acceleration_xyz));
-  tSensors->getAccXYZ(xyz_g);
-  x_g.number = (int16_t) (xyz_g->x_g * 250);
-  y_g.number = (int16_t) (xyz_g->y_g * 250);
-  z_g.number = (int16_t) (xyz_g->z_g * 250);
-  Serial.print("Acc X: "); Serial.println((float)x_g.number/250);
-  Serial.print("Acc Y: "); Serial.println((float)y_g.number/250);
-  Serial.print("Acc Z: "); Serial.println((float)z_g.number/250);
-  Serial.print("\0");
-  free(xyz_g);
-
-  getColor();
   
-  red.number = (uint16_t) redFrequency;
-  green.number = (uint16_t) greenFrequency;
-  blue.number = (uint16_t) blueFrequency;
+  if (reqCounter == 0) {
+    // No Alert Patient Data
+    ph.number = (uint16_t) (660); // ph = 6.6
+    Serial.print("pH: "); Serial.println((float)ph.number/100);
+    glucose.number = (uint16_t) (50); // glucose = 0.5
+    Serial.print("Glucose: "); Serial.println((float)glucose.number/100);
+        
+    red.number = (uint16_t) 255;
+    green.number = (uint16_t) 250;
+    blue.number = (uint16_t) 229;
+    
+  } else if (reqCounter == 1) {
+    // Alert Nurse Patient Data
+    ph.number = (uint16_t) (560); // ph = 5.6
+    Serial.print("pH: "); Serial.println((float)ph.number/100);
+    glucose.number = (uint16_t) (50); // glucose = 0.5
+    Serial.print("Glucose: "); Serial.println((float)glucose.number/100);
+
+    red.number = (uint16_t) 231;
+    green.number = (uint16_t) 203;
+    blue.number = (uint16_t) 84;
+    
+  } else if (reqCounter == 2) {
+    // Alert Doctor Patient Data
+    ph.number = (uint16_t) (490); // ph = 4.9
+    Serial.print("pH: "); Serial.println((float)ph.number/100);
+    glucose.number = (uint16_t) (50); // glucose = 0.5
+    Serial.print("Glucose: "); Serial.println((float)glucose.number/100);
+        
+    red.number = (uint16_t) 212;
+    green.number = (uint16_t) 99;
+    blue.number = (uint16_t) 31;
+    
+  } else {
+    ph.number = (uint16_t) (660); // ph = 7.7
+    Serial.print("pH: "); Serial.println((float)ph.number/100);
+    glucose.number = (uint16_t) (50); // glucose = 0.5
+    Serial.print("Glucose: "); Serial.println((float)glucose.number/100);
+    
+    getColor();
+    
+    red.number = (uint16_t) redFrequency;
+    green.number = (uint16_t) greenFrequency;
+    blue.number = (uint16_t) blueFrequency;
+  }
+
+
   
-  const uint8_t payloadSize = 12; //in bytes
+  const uint8_t payloadSize = 10; //in bytes
 //  byte* buf_str = (byte*) malloc (payloadSize);
   uint8_t buf_str[payloadSize];
 
-  buf_str[0] = tempt.bytes[0];
-  buf_str[1] = tempt.bytes[1];
-  buf_str[2] = pressure.bytes[0];
-  buf_str[3] = pressure.bytes[1];
-  buf_str[4] = photo.bytes[0];
-  buf_str[5] = photo.bytes[1];
-  buf_str[6] = red.bytes[0];
-  buf_str[7] = red.bytes[1];
-  buf_str[8] = green.bytes[0];
-  buf_str[9] = green.bytes[1];
-  buf_str[10] = blue.bytes[0];
-  buf_str[11] = blue.bytes[1];
+  buf_str[0] = ph.bytes[0];
+  buf_str[1] = ph.bytes[1];
+  buf_str[2] = glucose.bytes[0];
+  buf_str[3] = glucose.bytes[1];
+  buf_str[4] = red.bytes[0];
+  buf_str[5] = red.bytes[1];
+  buf_str[6] = green.bytes[0];
+  buf_str[7] = green.bytes[1];
+  buf_str[8] = blue.bytes[0];
+  buf_str[9] = blue.bytes[1];
+
+  reqCounter = reqCounter + 1;
 
   Send_Pload(buf_str, payloadSize);
 //  free(buf_str);
@@ -379,7 +404,7 @@ int getRed() {
     int freq = pulseIn(sensorOut, LOW);
 
     // Remap frequency
-    freq = map(freq, 152,12,0,255);
+    freq = map(freq, 40,3,0,255);
 
     
     // Printing the value on the serial monitor
@@ -399,7 +424,7 @@ int getGreen() {
     int freq = pulseIn(sensorOut, LOW);
 
     // Remap frequency
-    freq = map(freq, 175,13,0,255);
+    freq = map(freq, 60,3,0,255);
     
     // Printing the value on the serial monitor
     Serial.print("G= ");//printing name
@@ -418,7 +443,7 @@ int getBlue() {
     int freq = pulseIn(sensorOut, LOW);
 
     // Remap frequency
-    freq = map(freq, 52,4,0,255);
+    freq = map(freq, 20,0,0,255);
     
     // Printing the value on the serial monitor
     Serial.print("B= ");//printing name

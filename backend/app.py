@@ -43,8 +43,8 @@ def sensor_data():
         # }
         patientID = sensor_data['patientID']
         colour = sensor_data['sensorData']['colour']
-        ph = sensor_data['sensorData']['pH']
-        glucose = float(sensor_data['sensorData']['glucose'].split()[0])
+        ph = float(sensor_data['sensorData']['pH'])/100
+        glucose = float(sensor_data['sensorData']['glucose'].split()[0])/100
         protein = float(sensor_data['sensorData']['protein'].split()[0])
 
         print(patientID)
