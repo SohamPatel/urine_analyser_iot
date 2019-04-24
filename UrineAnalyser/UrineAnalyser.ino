@@ -121,10 +121,7 @@ void loop() {
 }
 
 void Send_Sensors(){
-  UINT16_t tempt, photo, pressure, red, green, blue;
-  INT16_t x_g, y_g, z_g;
-  acceleration_xyz *xyz_g;
-  FLOATUNION_t a_g;
+  UINT16_t ph, glucose, red, green, blue;
 
   // Sending a float requires at least 4 bytes
   // Thus they can be stored in 2 bytes
