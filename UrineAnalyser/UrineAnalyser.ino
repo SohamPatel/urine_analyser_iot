@@ -163,7 +163,7 @@ void Send_Sensors(){
     blue.number = (uint16_t) 31;
     
   } else {
-    ph.number = (uint16_t) (660); // ph = 7.7
+    ph.number = (uint16_t) (770); // ph = 7.7
     Serial.print("pH: "); Serial.println((float)ph.number/100);
     glucose.number = (uint16_t) (50); // glucose = 0.5
     Serial.print("Glucose: "); Serial.println((float)glucose.number/100);
