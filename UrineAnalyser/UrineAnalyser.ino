@@ -76,6 +76,9 @@ void setup() {
 
   Serial.begin(9600);
 
+  // Set request counter to 0
+  reqCounter = 0;
+  
   // Init watchdog timer
   watchdogSetup();
   watchdogCounter = 0;
@@ -104,7 +107,7 @@ void setup() {
 //  pinMode(redLED, INPUT);
 
   // Init timer to send a Sigfox message every 1 minutes
-  unsigned long sendInterval = 60000;
+  unsigned long sendInterval = 45000;
   timer.setInterval(sendInterval, timeIR);
 
   Serial.println(""); // Make a clean start
@@ -112,6 +115,7 @@ void setup() {
 }
 
 void loop() {
+  Serial.print("Counter: "); Serial.println(reqCounter);
   timer.run();
   wdt_reset();
   watchdogCounter = 0;
