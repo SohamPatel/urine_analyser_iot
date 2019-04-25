@@ -68,7 +68,7 @@ def sensor_data():
         print('Doctor contact number:', doctor_contact)
 
 
-        # TODO: Update EMR
+        # Update EMR
 
         alertFor = 'none'
         outcome = "PATIENT: " + patientFirstName + " " + patientLastName + " (Ward " + patientWard + ")\r"
@@ -77,7 +77,7 @@ def sensor_data():
 
         # Normal values for urine - http://intranet.tdmu.edu.ua/data/kafedra/internal/i_nurse/classes_stud/BSN%20(4year)%20Program/Full%20time%20study/Third%20year/Integrate%20Nursing%20Practicum/17.%20Diagnostic%20Testing.files/image082.jpg
 
-        # TODO: Analyse Colour - https://www.semanticscholar.org/paper/An-IoT-based-pervasive-body-hydration-tracker-(PHT)-Chin-Tisan/1cc21f9479b012e02bb433fd0d3d39b11be37561/figure/5
+        # Analyse Colour - https://www.semanticscholar.org/paper/An-IoT-based-pervasive-body-hydration-tracker-(PHT)-Chin-Tisan/1cc21f9479b012e02bb433fd0d3d39b11be37561/figure/5
     #                            https://www.korwater.com/pages/hydration-urine-test
         if (colour['B'] < 40):
             # Extremely Dehydrated, may indicate blood in urine or kidney disease, alert doctor
@@ -85,7 +85,7 @@ def sensor_data():
             alertFor = 'doctor'
         elif (colour['B'] >= 40 and colour['B'] < 100):
             # Dehydration, alert staff to monitor and hydrate patient
-            outcome += "\rColour indicates dehyrdation."
+            outcome += "\rColour indicates mild dehyrdation."
             alertFor = 'nurse'
         elif (colour['B'] >= 100 and colour['B'] < 170):
             # Minimal Dehydration
@@ -98,7 +98,7 @@ def sensor_data():
             pass
 
 
-        # TODO: Analyse pH - https://betterhealthclinic.com.au/urine-tests/
+        # Analyse pH - https://betterhealthclinic.com.au/urine-tests/
         if (ph < 5.5):
             # Very acidic, alert doctor
             outcome += "\rpH level indicates very acidic urine (" + str(ph) + ")."
@@ -122,7 +122,7 @@ def sensor_data():
                 alertFor = 'nurse'
 
 
-        # TODO: Analyse Glucose - https://www.healthline.com/health/glucose-test-urine#results
+        # Analyse Glucose - https://www.healthline.com/health/glucose-test-urine#results
         if (glucose >= 0 and glucose <= 0.8):
             # Normal glucose level
             # outcome += "\rNormal glucose level."
@@ -133,7 +133,7 @@ def sensor_data():
             alertFor = 'doctor'
         
 
-        # # TODO: Analyse Protein
+        # Analyse Protein
         # outcome += "\rUnable to analyse Protein level."
 
 

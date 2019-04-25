@@ -89,7 +89,7 @@ void setup() {
     Serial.println(""); // Make a clean restart
     delay(1000);
     PublicModeSF = 0;
-    flagInit = Isigfox->initSigfox();
+    flagInit = Isigfox->initSigfox(); // Initialise and test connection
     Isigfox->testComms();
     GetDeviceID();
     //Isigfox->setPublicKey(); // set public key for usage with SNEK
@@ -106,7 +106,7 @@ void setup() {
   ledCounter = 0;
 //  pinMode(redLED, INPUT);
 
-  // Init timer to send a Sigfox message every 1 minutes
+  // Init timer to send a Sigfox message every 45 seconds
   unsigned long sendInterval = 45000;
   timer.setInterval(sendInterval, timeIR);
 
@@ -168,7 +168,8 @@ void Send_Sensors(){
     Serial.print("pH: "); Serial.println((float)ph.number/100);
     glucose.number = (uint16_t) (50); // glucose = 0.5
     Serial.print("Glucose: "); Serial.println((float)glucose.number/100);
-    
+
+    // Retrieve colour sensor data
     getColor();
     
     red.number = (uint16_t) redFrequency;
@@ -397,7 +398,7 @@ void getColor() {
 }
 
 int getRed() {
-    // Setting red filtered photodiodes to be read
+    // Setting red frequencies to be read
     digitalWrite(S2,LOW);
     digitalWrite(S3,LOW);
     
@@ -417,7 +418,7 @@ int getRed() {
 }
 
 int getGreen() {
-    // Setting Green filtered photodiodes to be read
+    // Setting green frequencies to be read
     digitalWrite(S2,HIGH);
     digitalWrite(S3,HIGH);
     
@@ -436,7 +437,7 @@ int getGreen() {
 }
 
 int getBlue() {
-    // Setting Blue filtered photodiodes to be read
+    // Setting blue frequencies to be read
     digitalWrite(S2,LOW);
     digitalWrite(S3,HIGH);
     
