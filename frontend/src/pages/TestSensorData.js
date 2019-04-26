@@ -37,7 +37,7 @@ class TestSensorData extends React.Component {
         <Button variant="contained" className={classes.button} onClick={() => {
           console.log(this.state.text)
           console.log(this.state.data)
-          fetch('http://localhost:5000/sensor_data', {
+          fetch('https://urine-analyser-iot.herokuapp.com/sensor_data', {
             method: 'POST',
             headers: {
               'Accept': 'application/json',
